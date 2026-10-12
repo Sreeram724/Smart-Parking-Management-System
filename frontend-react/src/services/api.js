@@ -1,5 +1,9 @@
-const API_BASE = "http://localhost:5000/api";
-export const SOCKET_URL = "http://localhost:4000";
+const rawApiBase = import.meta.env.VITE_API_BASE || "http://localhost:5000/api";
+const API_BASE = rawApiBase.replace(/\/+$/, "").endsWith("/api")
+  ? rawApiBase.replace(/\/+$/, "")
+  : `${rawApiBase.replace(/\/+$/, "")}/api`;
+
+export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:4000";
 
 function getAuthHeader() {
   const token = localStorage.getItem("parkpulse_token");

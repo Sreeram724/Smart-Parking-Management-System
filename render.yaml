@@ -1,0 +1,39 @@
+services:
+  # 1. Frontend Web App (Static Site)
+  - type: web
+    name: parkpulse-frontend
+    runtime: static
+    buildCommand: cd frontend-react && npm install && npm run build
+    staticPublishPath: frontend-react/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  # 2. Python Flask Backend API
+  - type: web
+    name: parkpulse-backend
+    runtime: python
+    buildCommand: pip install -r backend-flask/requirements.txt
+    startCommand: cd backend-flask && gunicorn --workers 2 --bind 0.0.0.0:$PORT "app:create_app()"
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: MONGO_URI
+        sync: false
+      - key: DB_NAME
+        value: smart_parking
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_EXPIRATION_HOURS
+        value: 24
+
+  # 3. Node.js Real-time WebSocket Service
+  - type: web
+    name: parkpulse-realtime
+    runtime: node
+    buildCommand: cd realtime-service && npm install
+    startCommand: cd realtime-service && npm start
+    envVars:
+      - key: PORT
+        value: 4000
