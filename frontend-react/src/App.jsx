@@ -9,17 +9,18 @@ import LoginModal from "./components/LoginModal";
 import { useSocket } from "./context/SocketContext";
 import { useAuth } from "./context/AuthContext";
 import { api } from "./services/api";
+import { getMockSpots } from "./services/mockData";
 
 export default function App() {
   const { socket, isConnected } = useSocket();
   const { role } = useAuth();
 
   const [activeTab, setActiveTab] = useState("grid"); // "grid" | "bookings" | "admin"
-  const [spots, setSpots] = useState([]);
+  const [spots, setSpots] = useState(() => getMockSpots());
   const [zones, setZones] = useState(["Zone A", "Zone B", "Zone C"]);
   const [selectedZone, setSelectedZone] = useState("All");
   const [vehicleFilter, setVehicleFilter] = useState("All");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // Modals state
   const [selectedSpotForBooking, setSelectedSpotForBooking] = useState(null);
@@ -28,23 +29,26 @@ export default function App() {
   const [lastUpdatedSpotId, setLastUpdatedSpotId] = useState(null);
   const [seedNotice, setSeedNotice] = useState("");
 
-  // Fetch spots from Flask API
+  // Fetch spots from Flask API (or fallback to local mock store)
   const fetchSpots = useCallback(async () => {
     try {
-      const res = await api.getSpots(selectedZone, vehicleFilter);
-      if (res.success) {
+      const res = await api.getSpots();
+      if (res.success && res.spots && res.spots.length > 0) {
         setSpots(res.spots);
+      } else {
+        setSpots(getMockSpots());
       }
       const zoneRes = await api.getZones();
-      if (zoneRes.success) {
+      if (zoneRes.success && zoneRes.zones && zoneRes.zones.length > 0) {
         setZones(zoneRes.zones);
       }
     } catch (err) {
-      console.warn("Could not load spots from API:", err);
+      console.warn("Could not load spots from API, retaining interactive demo slots:", err);
+      setSpots(getMockSpots());
     } finally {
       setLoading(false);
     }
-  }, [selectedZone, vehicleFilter]);
+  }, []);
 
   useEffect(() => {
     fetchSpots();

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { io } from "socket.io-client";
-import { SOCKET_URL } from "../services/api";
+import { getEffectiveSocketUrl } from "../services/api";
 
 const SocketContext = createContext();
 
@@ -9,10 +9,12 @@ export function SocketProvider({ children }) {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const socketInstance = io(SOCKET_URL, {
+    const socketUrl = getEffectiveSocketUrl();
+    const socketInstance = io(socketUrl, {
       transports: ["websocket", "polling"],
-      reconnectionAttempts: 10,
-      reconnectionDelay: 2000,
+      reconnectionAttempts: 4,
+      reconnectionDelay: 3000,
+      timeout: 4000,
     });
 
     socketInstance.on("connect", () => {
